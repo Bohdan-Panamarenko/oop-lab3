@@ -1,0 +1,16 @@
+[
+  {
+    "name": "Walk like an egyptian",
+    "description": "'The Bangles' band. Olimpiyskii stadium.",
+    "price": 100,
+    "seats": 10,
+    "date": "22-12-22"
+  },
+  {
+    "name": "Eternal flame",
+    "description": "'The Bangles' band. Olimpiyskii stadium.",
+    "price": 100,
+    "seats": 20,
+    "date": "21-11-10"
+  }
+]
