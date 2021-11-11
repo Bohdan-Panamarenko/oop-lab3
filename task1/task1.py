@@ -12,43 +12,60 @@
 from datetime import datetime, timedelta
 import json
 import os
+from uuid import uuid4
 
 
-class Ticket:
-    def __init__(self, number: int, name: str, description: str, price: float, date: datetime):
+class RegularTicket:
+    def __init__(self, seat: int, name: str, description: str, price: float, date: datetime):
         self.__name = name
-        self.__number = number
+        self.__seat = seat
         self.__description = description
         self.__price = price
         self.__date = date
+        self.__uuid = uuid4()
 
     @property
     def price(self):
         return self.__price
 
     def __str__(self):
-        return f"'{self.__name}': seat {self.__number}, date {self.__date.date()}\n{self.__description}\n" \
+        return f"{self.__class__.__name__} -- {self.__uuid}\n" \
+               f"'{self.__name}': seat {self.__seat}, date {self.__date.date()}\n" \
+               f"{self.__description}\n" \
                f"Price {self.price}"
 
+    def __get_dict(self):
+        obj = dict()
+        obj["name"] = self.__name
+        obj["seat"] = self.__seat
+        obj["description"] = self.__description
+        obj["price"] = self.__price
+        obj["date"] = self.__date.date().__str__()
+        obj["uuid"] = self.__uuid.__str__()
+        return obj
 
-class AdvancedTicket(Ticket):
-    def __init__(self, number: int, name: str, description: str, price: float, date: datetime):
-        Ticket.__init__(self, number, name, description, price * 0.6, date)
+    def serialize(self):
+        with open(f'tickets/{self.__class__.__name__}-{self.__uuid}.json', 'w', encoding='utf-8') as f:
+            json.dump(self.__get_dict(), f, ensure_ascii=False, indent=2)
 
 
-class StudentTicket(Ticket):
-    def __init__(self, number: int, name: str, description: str, price: float, date: datetime):
-        Ticket.__init__(self, number, name, description, price * 0.5, date)
+class AdvancedTicket(RegularTicket):
+    def __init__(self, seat: int, name: str, description: str, price: float, date: datetime):
+        RegularTicket.__init__(self, seat, name, description, round(price * 0.6, 2), date)
 
 
-class LateTicket(Ticket):
-    def __init__(self, number: int, name: str, description: str, price: float, date: datetime):
-        Ticket.__init__(self, number, name, description, price * 1.1, date)
+class StudentTicket(RegularTicket):
+    def __init__(self, seat: int, name: str, description: str, price: float, date: datetime):
+        RegularTicket.__init__(self, seat, name, description, round(price * 0.5, 2), date)
+
+
+class LateTicket(RegularTicket):
+    def __init__(self, seat: int, name: str, description: str, price: float, date: datetime):
+        RegularTicket.__init__(self, seat, name, description, round(price * 1.1, 2), date)
 
 
 class TicketPattern:
     def __init__(self, ticket_pattern: dict):
-
         try:
             self.__set_name(ticket_pattern["name"])
             self.__set_description(ticket_pattern["description"])
@@ -81,6 +98,18 @@ class TicketPattern:
     def __set_date(self, value: str):
         self.__date = datetime.strptime(value, "%y-%m-%d")
 
+    def get_ticket(self, seat: int) -> RegularTicket:
+        time_to_concert = self.date - datetime.today()
+
+        if time_to_concert >= timedelta(days=60):
+            return AdvancedTicket(seat, self.name, self.description, self.price, self.date)
+
+        elif timedelta(days=10) > time_to_concert:
+            return LateTicket(seat, self.name, self.description, self.price, self.date)
+
+        else:
+            return RegularTicket(seat, self.name, self.description, self.price, self.date)
+
     @property
     def name(self):
         return self.__name
@@ -102,17 +131,36 @@ class TicketPattern:
         return self.__date
 
     def __str__(self):
-        return f"'{self.name}': date {self.date.date()}\n{self.description}\nRegular price {self.price}"
+        return self.get_ticket(0).__str__() + f"\nRegular price {self.price}"
 
 
-class TicketFactory(TicketPattern):
+class TicketFactory:
     def __init__(self, ticket_pattern: dict):
-        TicketPattern.__init__(self, ticket_pattern)
-
+        self.__tp = TicketPattern(ticket_pattern)
         self.__sold = dict()
 
+    @property
+    def name(self):
+        return self.__tp.name
+
+    @property
+    def description(self):
+        return self.__tp.description
+
+    @property
+    def price(self):
+        return self.__tp.price
+
+    @property
+    def seats(self):
+        return self.__tp.seats
+
+    @property
+    def date(self):
+        return self.__tp.date
+
     def __mark(self, seat: int):
-        if not self.__sold.get(seat, False) and self.seats >= seat > 0:
+        if seat not in self.__sold and self.seats >= seat > 0:
             self.__sold[seat] = True
         else:
             raise ValueError(f"seat with number '{seat}' is already taken or invalid, try to get another seat")
@@ -121,30 +169,24 @@ class TicketFactory(TicketPattern):
         all_seats = set(range(1, self.seats))
         return all_seats - set(self.__sold.keys())
 
-    def get_ticket(self, number: int) -> Ticket:
-        time_to_concert = self.date - datetime.today()
-
-        if time_to_concert < timedelta(0):
-            raise RuntimeError("this concert is already gone")
-
-        self.__mark(number)
-
-        if time_to_concert >= timedelta(days=60):
-            return AdvancedTicket(number, self.name, self.description, self.price, self.date)
-
-        elif timedelta(days=10) > time_to_concert:
-            return LateTicket(number, self.name, self.description, self.price, self.date)
-
-        else:
-            return Ticket(number, self.name, self.description, self.price, self.date)
-
-    def get_student_ticket(self, number: int) -> Ticket:
+    def get_ticket(self, seat: int) -> RegularTicket:
         time_to_concert = self.date - datetime.today()
         if time_to_concert < timedelta(0):
             raise RuntimeError("this concert is already gone")
 
-        self.__mark(number)
-        return StudentTicket(number, self.name, self.description, self.price, self.date)
+        self.__mark(seat)
+        return self.__tp.get_ticket(seat)
+
+    def get_student_ticket(self, seat: int) -> RegularTicket:
+        time_to_concert = self.date - datetime.today()
+        if time_to_concert < timedelta(0):
+            raise RuntimeError("this concert is already gone")
+
+        self.__mark(seat)
+        return StudentTicket(seat, self.name, self.description, self.price, self.date)
+
+    def __str__(self):
+        return self.__tp.__str__()
 
 
 class TicketsStore:
@@ -181,5 +223,6 @@ class TicketsStore:
         tf = self.get_factory(tf_num)
 
         return tf.get_student_ticket(seat_num)
+
 
 
