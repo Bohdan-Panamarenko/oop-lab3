@@ -9,12 +9,78 @@ import os
 from datetime import datetime
 
 
+# def get_pizza_of_the_day(day: int):
+from typing import List
+
+
 class PizzaOfTheDay:
-    def __init__(self, name: str):
+    def __init__(self, name: str, price: float):
         self.__name = name
+        self.price = price
 
     def __str__(self):
-        return self.name
+        return f"{self.name} -- {self.price}"
+
+    @property
+    def price(self):
+        return self.__price
+
+    @price.setter
+    def price(self, value: float):
+        if value <= 0:
+            raise ValueError("price can not be less or equal to zero")
+        self.__price = value
+
+    @property
+    def name(self):
+        return self.__name
+
+
+class MondayPizza(PizzaOfTheDay):
+    pass
+
+
+class TuesdayPizza(PizzaOfTheDay):
+    pass
+
+
+class WednesdayPizza(PizzaOfTheDay):
+    pass
+
+
+class ThursdayPizza(PizzaOfTheDay):
+    pass
+
+
+class FridayPizza(PizzaOfTheDay):
+    pass
+
+
+class SaturdayPizza(PizzaOfTheDay):
+    pass
+
+
+class SundayPizza(PizzaOfTheDay):
+    pass
+
+
+class Feature:
+    def __init__(self, name: str, price: float):
+        self.__name = name
+        self.price = price
+
+    def __str__(self):
+        return f"{self.name} -- {self.price}"
+
+    @property
+    def price(self):
+        return self.__price
+
+    @price.setter
+    def price(self, value: float):
+        if value <= 0:
+            raise ValueError("price can not be less or equal to zero")
+        self.__price = value
 
     @property
     def name(self):
@@ -22,6 +88,16 @@ class PizzaOfTheDay:
 
 
 class PizzaOfTheDayFactory:
+    PIZZAS = {
+        0: MondayPizza,
+        1: TuesdayPizza,
+        2: WednesdayPizza,
+        3: ThursdayPizza,
+        4: FridayPizza,
+        5: SaturdayPizza,
+        6: SundayPizza
+    }
+
     def __init__(self, path: str):
         if not os.path.exists(path):
             raise ValueError("given file does not exist")
@@ -33,26 +109,14 @@ class PizzaOfTheDayFactory:
 
     def __check_pizza(self):
         for day in range(0, 6):
-            if not str(day) in self.__pizza:
+            try:
+                self.__pizza[day]
+            except IndexError:
                 raise ValueError("lost pizza for a weekday width index " + str(day))
 
     def get_pizza(self):
-        return PizzaOfTheDay(self.__pizza[str(datetime.today().weekday())])
-
-
-class PizzaOfTheDayWithFeatures(PizzaOfTheDay):
-    def __init__(self, name: str, features=None):
-        PizzaOfTheDay.__init__(self, name)
-
-        if not features:
-            features = list()
-        self.features = features
-
-    def __str__(self):
-        if len(self.features) == 0:
-            return PizzaOfTheDay.__str__(self)
-
-        return f"{self.name} with additional ingredients: {', '.join(self.features)}"
+        pizza = self.__pizza[datetime.today().weekday()]
+        return self.PIZZAS[datetime.today().weekday()](list(pizza.keys())[0], list(pizza.values())[0])
 
     # @property
     # def features(self):
@@ -63,49 +127,68 @@ class PizzaOfTheDayWithFeatures(PizzaOfTheDay):
     #     self.__features = features
 
 
-class PizzaOfTheDayWithFeaturesFactory(PizzaOfTheDayFactory):
-    def __init__(self, pizza_path: str, features_path: str):
-        PizzaOfTheDayFactory.__init__(self, pizza_path)
+# class PizzaOfTheDayWithFeaturesFactory(PizzaOfTheDayFactory):
+#     def __init__(self, pizza_path: str, features_path: str):
+#         PizzaOfTheDayFactory.__init__(self, pizza_path)
+#
+#         if not os.path.exists(features_path):
+#             raise ValueError("given file does not exist")
+#
+#         with open(features_path, 'r') as f:
+#             self.__features: list = json.load(f)
+#
+#     def get_features_dict(self):
+#         return dict(zip(range(1, len(self.__features)), self.__features))
+#
+#     def get_pizza(self):
+#         return PizzaOfTheDayWithFeatures(PizzaOfTheDayFactory.get_pizza(self).name)
+#
+#     def check_features(self, features: list):
+#         for feature in features:
+#             if feature not in self.__features:
+#                 raise ValueError(f"feature '{feature}' does not exist")
+#
+#     def get_pizza_with_features(self, features: list):
+#         self.check_features(features)
+#
+#         return PizzaOfTheDayWithFeatures(
+#             PizzaOfTheDayFactory.get_pizza(self).name,
+#             features
+#         )
 
+
+class FeatureStorage:
+    def __init__(self, features_path: str):
         if not os.path.exists(features_path):
             raise ValueError("given file does not exist")
 
         with open(features_path, 'r') as f:
-            self.__features: list = json.load(f)
+            features: list = json.load(f)
+            self.__features = list((Feature(list(feature.keys())[0], list(feature.values())[0]) for feature in features))
 
-    def get_features_dict(self):
-        return dict(zip(range(1, len(self.__features)), self.__features))
 
-    def get_pizza(self):
-        return PizzaOfTheDayWithFeatures(PizzaOfTheDayFactory.get_pizza(self).name)
+    @property
+    def features(self):
+        return self.__features.copy()
 
-    def check_features(self, features: list):
-        for feature in features:
-            if feature not in self.__features:
-                raise ValueError(f"feature '{feature}' does not exist")
-
-    def get_pizza_with_features(self, features: list):
-        self.check_features(features)
-
-        return PizzaOfTheDayWithFeatures(
-            PizzaOfTheDayFactory.get_pizza(self).name,
-            features
-        )
+    def __str__(self):
+        return ', '.join(map(lambda feature: feature.__str__(), self.__features))
 
 
 class Order:
-    def __init__(self, pizza: PizzaOfTheDayWithFeatures, customer: str, address: str):
-        self.pizza = pizza
+    def __init__(self, pizza_path: str, customer: str, address: str, features: List[Feature]):
+        self.__pizza = PizzaOfTheDayFactory(pizza_path).get_pizza()
         self.customer = customer
         self.address = address
+        self.features = features
 
     @property
     def pizza(self):
         return self.__pizza
 
-    @pizza.setter
-    def pizza(self, value: PizzaOfTheDayWithFeatures):
-        self.__pizza = value
+    # @pizza.setter
+    # def pizza(self, value: PizzaOfTheDay):
+    #     self.__pizza = value
 
     @property
     def customer(self):
@@ -123,7 +206,27 @@ class Order:
     def address(self, value: str):
         self.__address = value
 
+    @property
+    def features(self):
+        return self.__features
+
+    @features.setter
+    def features(self, value: List[Feature]):
+        self.__features = value
+
+    @property
+    def price(self):
+        price = self.pizza.price
+        x = (feature.price for feature in self.__features)
+        return price + sum(x)
+
+    def features_str(self):
+        if len(self.features) > 0:
+            return "Features: " + ', '.join(map(lambda feature: feature.__str__(), self.features))
+        return ''
+
     def __str__(self):
-        return f"{self.customer} - {self.address}\n--> {self.pizza}"
+        return f"{self.customer} - {self.address}\n--> {self.pizza}\n{self.features_str()}\nTotal price: {self.price}"
+
 
 

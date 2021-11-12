@@ -1,19 +1,23 @@
 import re
 
-from task2 import PizzaOfTheDayWithFeaturesFactory, Order
+from task2 import FeatureStorage, Order
 
 
 def print_err(err: Exception):
     print(f"Error: {err}")
 
 
-def add_features(all_features: dict):
+def add_features(all_features: list):
     print("<-- Adding features -->")
     chosen_features = list()
 
+    all_features_dict = dict()
+    for i in range(1, len(all_features) + 1):
+        all_features_dict[i] = all_features[i - 1]
+
     allowed_features = 3
     while allowed_features > 0:
-        print("\n".join(list(map(lambda key: f"--> {key}. {all_features[key]}", all_features.keys()))))
+        print("\n".join(list(map(lambda key: f"--> {key}. {all_features_dict[key]}", all_features_dict.keys()))))
         print("--> 0. End")
         val = input(f"Choose feature ({allowed_features} left):")
 
@@ -25,15 +29,15 @@ def add_features(all_features: dict):
             if num == 0:
                 break
 
-            chosen_features.append(all_features[num])
-            del(all_features[num])
+            chosen_features.append(all_features_dict[num])
+            del(all_features_dict[num])
 
             allowed_features -= 1
         except Exception as e:
             print_err(e)
             continue
 
-    print("You chose: " + ", ".join(chosen_features))
+    print("You chose: " + ", ".join(list(map(lambda feature: feature.__str__(), chosen_features))))
     val = input("Made a mistake, try again (y - yes): ")
     if len(val) > 0 and val[0] == 'y':
         return add_features(all_features)
@@ -71,15 +75,15 @@ def continue_order(order: Order):
 
 
 def main():
-    pbf = PizzaOfTheDayWithFeaturesFactory("pizza.json", "features.json")
-    order = Order(pbf.get_pizza(), "", "")
+    fs = FeatureStorage("features.json")
+    order = Order("pizza.json", "", "", [])
 
     print(f"Today we are having: {order.pizza}")
     print("You can add some additional ingredients to your pizza!")
-    print(f"There are: {', '.join(pbf.get_features_dict().values())}")
+    print(f'There are:\n{ fs.__str__() }')
 
     while True:
-        print(f"Order for now: " + order.__str__())
+        print(f"Order for now: " + order.__str__() + "\n")
         print("Allowed actions:")
         print("--> 1. Add features")
         print("--> 2. Continue ordering")
@@ -96,8 +100,7 @@ def main():
             continue
 
         if num == 1:
-            features = add_features(pbf.get_features_dict())
-            order.pizza = pbf.get_pizza_with_features(features)
+            order.features = add_features(fs.features)
         elif num == 2:
             continue_order(order)
         else:

@@ -1,9 +1,23 @@
-{
-  "0": "Neapolitan",
-  "1": "Chicago",
-  "2": "New York-Style",
-  "3": "Sicilian",
-  "4": "Greek",
-  "5": "California",
-  "6": "Pepperoni"
-}
+[
+  {
+    "Neapolitan": 10.10
+  },
+  {
+    "Chicago": 11.25
+  },
+  {
+    "New York-Style": 7.45
+  },
+  {
+    "Sicilian": 14.99
+  },
+  {
+    "Greek": 9.59
+  },
+  {
+    "California": 8.48
+  },
+  {
+    "Pepperoni": 10.45
+  }
+]

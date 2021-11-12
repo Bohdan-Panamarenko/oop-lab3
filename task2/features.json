@@ -1,8 +1,20 @@
 [
-  "extra ketchup",
-  "soft cheese",
-  "hard cheese",
-  "extra vegetables",
-  "mushrooms",
-  "pickles"
+  {
+    "extra ketchup": 1.99
+  },
+  {
+    "soft cheese": 0.99
+  },
+  {
+    "hard cheese": 0.99
+  },
+  {
+    "extra vegetables": 1.50
+  },
+  {
+    "mushrooms": 2.99
+  },
+  {
+    "pickles": 1.25
+  }
 ]
