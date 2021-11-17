@@ -7,9 +7,6 @@
 import json
 import os
 from datetime import datetime
-
-
-# def get_pizza_of_the_day(day: int):
 from typing import List
 
 
@@ -37,31 +34,38 @@ class PizzaOfTheDay:
 
 
 class MondayPizza(PizzaOfTheDay):
-    pass
+    def __str__(self):
+        return "Monday: " + PizzaOfTheDay.__str__(self)
 
 
 class TuesdayPizza(PizzaOfTheDay):
-    pass
+    def __str__(self):
+        return "Tuesday: " + PizzaOfTheDay.__str__(self)
 
 
 class WednesdayPizza(PizzaOfTheDay):
-    pass
+    def __str__(self):
+        return "Wednesday: " + PizzaOfTheDay.__str__(self)
 
 
 class ThursdayPizza(PizzaOfTheDay):
-    pass
+    def __str__(self):
+        return "Thursday: " + PizzaOfTheDay.__str__(self)
 
 
 class FridayPizza(PizzaOfTheDay):
-    pass
+    def __str__(self):
+        return "Friday: " + PizzaOfTheDay.__str__(self)
 
 
 class SaturdayPizza(PizzaOfTheDay):
-    pass
+    def __str__(self):
+        return "Saturday: " + PizzaOfTheDay.__str__(self)
 
 
 class SundayPizza(PizzaOfTheDay):
-    pass
+    def __str__(self):
+        return "Sunday: " + PizzaOfTheDay.__str__(self)
 
 
 class Feature:
@@ -118,44 +122,6 @@ class PizzaOfTheDayFactory:
         pizza = self.__pizza[datetime.today().weekday()]
         return self.PIZZAS[datetime.today().weekday()](list(pizza.keys())[0], list(pizza.values())[0])
 
-    # @property
-    # def features(self):
-    #     return self.__features
-    #
-    # @features.setter
-    # def features(self, features: list):
-    #     self.__features = features
-
-
-# class PizzaOfTheDayWithFeaturesFactory(PizzaOfTheDayFactory):
-#     def __init__(self, pizza_path: str, features_path: str):
-#         PizzaOfTheDayFactory.__init__(self, pizza_path)
-#
-#         if not os.path.exists(features_path):
-#             raise ValueError("given file does not exist")
-#
-#         with open(features_path, 'r') as f:
-#             self.__features: list = json.load(f)
-#
-#     def get_features_dict(self):
-#         return dict(zip(range(1, len(self.__features)), self.__features))
-#
-#     def get_pizza(self):
-#         return PizzaOfTheDayWithFeatures(PizzaOfTheDayFactory.get_pizza(self).name)
-#
-#     def check_features(self, features: list):
-#         for feature in features:
-#             if feature not in self.__features:
-#                 raise ValueError(f"feature '{feature}' does not exist")
-#
-#     def get_pizza_with_features(self, features: list):
-#         self.check_features(features)
-#
-#         return PizzaOfTheDayWithFeatures(
-#             PizzaOfTheDayFactory.get_pizza(self).name,
-#             features
-#         )
-
 
 class FeatureStorage:
     def __init__(self, features_path: str):
@@ -165,7 +131,6 @@ class FeatureStorage:
         with open(features_path, 'r') as f:
             features: list = json.load(f)
             self.__features = list((Feature(list(feature.keys())[0], list(feature.values())[0]) for feature in features))
-
 
     @property
     def features(self):
@@ -185,10 +150,6 @@ class Order:
     @property
     def pizza(self):
         return self.__pizza
-
-    # @pizza.setter
-    # def pizza(self, value: PizzaOfTheDay):
-    #     self.__pizza = value
 
     @property
     def customer(self):
@@ -218,7 +179,7 @@ class Order:
     def price(self):
         price = self.pizza.price
         x = (feature.price for feature in self.__features)
-        return price + sum(x)
+        return round(price + sum(x), 2)
 
     def features_str(self):
         if len(self.features) > 0:

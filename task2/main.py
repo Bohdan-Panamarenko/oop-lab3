@@ -83,7 +83,7 @@ def main():
     print(f'There are:\n{ fs.__str__() }')
 
     while True:
-        print(f"Order for now: " + order.__str__() + "\n")
+        print(f"\nOrder for now: " + order.__str__() + "\n")
         print("Allowed actions:")
         print("--> 1. Add features")
         print("--> 2. Continue ordering")
